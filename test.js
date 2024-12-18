@@ -147,46 +147,4 @@ async function resetProxies() {
   fs.writeFileSync("accounts.txt", accs);
 }
 
-async function testLogin() {
-  const loginData = {
-    logonID: utils.random32BitNumber(),
-    accountName: "rocodilef0panichi6247",
-    password: "OOJS70YN8IQ3293",
-  };
-  const steamUser = new SteamUser({httpProxy: "http://WB95I6AL:CDSWBI3G@88.216.182.88:54410"});
-
-  await login(steamUser, loginData);
-
-  const csgo = new GlobalOffensive(steamUser);
-
-  csgo.on("connectedToGC", () => {
-    winston.info(`${username} CSGO Client Ready!`);
-
-    this.ready = true;
-  });
-
-  csgo.on("disconnectedFromGC", reason => {
-    winston.warn(`${username} CSGO unready (${reason}), trying to reconnect!`);
-    this.ready = false;
-  });
-
-  csgo.on("connectionStatus", status => {
-    winston.debug(`${username} GC Connection Status Update ${status}`);
-  });
-
-  csgo.on("debug", msg => {
-    winston.debug(msg);
-  });
-}
-
-async function login(steamClient, loginData) {
-  return new Promise((resolve, reject) => {
-    steamClient.on("loggedOn", (details, parental) => {
-      winston.info(`${loginData.accountName} Log on OK`);
-      resolve();
-    });
-    steamClient.logOn(loginData);
-  });
-}
-
 main();
