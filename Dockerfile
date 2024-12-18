@@ -10,4 +10,4 @@ RUN npm install
 
 EXPOSE 8080
 
-CMD [ "node", "--max-old-space-size=40096", "--prof --logfile=prof-log.txt" "index.js" ]
+CMD [ "node", "--max-old-space-size=40096", "--prof --logfile=prof-log.txt", "index.js" ]
