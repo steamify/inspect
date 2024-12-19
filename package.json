@@ -18,7 +18,7 @@
     "dotenv": "^16.4.1",
     "express": "^5.0.0",
     "express-rate-limit": "^5.2.6",
-    "globaloffensive": "^3.1.0",
+    "globaloffensive": "3.2.0",
     "https-proxy-agent": "^7.0.4",
     "long": "^3.2.0",
     "mongodb": "^2.2.36",
