@@ -100,6 +100,10 @@ async function handleJob(job) {
     job.setResponse(item.a, item);
   }
 
+  if (job.remainingSize() <= 0) {
+    return;
+  }
+
   if (!botController.hasBotOnline()) {
     return job.setResponseRemaining(errors.SteamOffline);
   }
