@@ -101,7 +101,6 @@ async function handleJob(job) {
   }
 
   if (job.remainingSize() <= 0) {
-    winston.info('No remaining items to process, exiting');   
     return;
   }
 
