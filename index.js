@@ -83,18 +83,8 @@ CONFIG.allowed_origins = CONFIG.allowed_origins || [];
 const allowedRegexOrigins = CONFIG.allowed_regex_origins.map(origin => new RegExp(origin));
 
 async function handleJob(job) {
-  const startTime = performance.now();
-  winston.info('Job processing started', { jobId: job.id });
-
   // See which items have already been cached
-  const itemStartTime = performance.now();
-  winston.info('Retrieving item data from PostgreSQL', { jobId: job.id });
-
   const itemData = await postgres.getItemData(job.getRemainingLinks().map(e => e.link));
-  const itemEndTime = performance.now();
-  winston.info('Item data retrieved', {
-    duration: `${(itemEndTime - itemStartTime).toFixed(2)}ms`,
-  });
 
   for (let item of itemData) {
     const link = job.getLink(item.a);
@@ -111,12 +101,7 @@ async function handleJob(job) {
   }
 
   if (job.remainingSize() <= 0) {
-    winston.info('No remaining items to process, exiting', { jobId: job.id });
-    const endTime = performance.now(); // End measuring time for handleJob execution
-    winston.info('Job processing completed', {
-      jobId: job.id,
-      duration: `${(endTime - startTime).toFixed(2)}ms`,
-    });
+    winston.info('No remaining items to process, exiting');   
     return;
   }
 
@@ -143,11 +128,6 @@ async function handleJob(job) {
   if (job.remainingSize() > 0) {
     queue.addJob(job, CONFIG.bot_settings.max_attempts);
   }
-  const endTime = performance.now(); // End measuring time for handleJob execution
-    winston.info('Job processing completed', {
-      jobId: job.id,
-      duration: `${(endTime - startTime).toFixed(2)}ms`,
-    });
 }
 
 function canSubmitPrice(key, link, price) {
@@ -251,7 +231,6 @@ app.post("/api/inspect/bulk", async (req, res) => {
     winston.info(`Request handling time: ${Date.now() - startTime}ms`)
   } catch (e) {
     winston.warn(e);
-    logger.info(`Request handling time: ${Date.now() - startTime}ms`);
     errors.GenericBad.respond(res);
   }
 });
