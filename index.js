@@ -191,8 +191,6 @@ app.get("/api/inspect", async (req, res) => {
 
 app.post("/api/inspect/bulk", async (req, res) => {
   const startTime = Date.now();
-  winston.info("Request started");
-
   if (!req.body || (CONFIG.bulk_key && req.body.bulk_key !== CONFIG.bulk_key)) {
     return errors.BadSecret.respond(res);
   }
@@ -228,11 +226,11 @@ app.post("/api/inspect/bulk", async (req, res) => {
 
   try {
     await handleJob(job);
-    winston.info(`Request handling time: ${Date.now() - startTime}ms`)
   } catch (e) {
     winston.warn(e);
     errors.GenericBad.respond(res);
   }
+  winston.info(`Request handling time: ${Date.now() - startTime}ms`)
 });
 
 app.get("/api/stats", (req, res) => {
