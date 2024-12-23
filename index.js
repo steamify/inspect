@@ -83,17 +83,16 @@ CONFIG.allowed_origins = CONFIG.allowed_origins || [];
 const allowedRegexOrigins = CONFIG.allowed_regex_origins.map(origin => new RegExp(origin));
 
 async function handleJob(job) {
-  const startTime = performance.now(); // Start measuring time for handleJob execution
+  const startTime = performance.now();
   winston.info('Job processing started', { jobId: job.id });
 
   // See which items have already been cached
-  const itemStartTime = performance.now(); // Start measuring time for item data retrieval
+  const itemStartTime = performance.now();
   winston.info('Retrieving item data from PostgreSQL', { jobId: job.id });
 
   const itemData = await postgres.getItemData(job.getRemainingLinks().map(e => e.link));
-  const itemEndTime = performance.now(); // End measuring time for item data retrieval
+  const itemEndTime = performance.now();
   winston.info('Item data retrieved', {
-    jobId: job.id,
     duration: `${(itemEndTime - itemStartTime).toFixed(2)}ms`,
   });
 
@@ -101,17 +100,13 @@ async function handleJob(job) {
     const link = job.getLink(item.a);
 
     if (!item.price && link.price) {
-      winston.info('Updating item price', { itemId: item.a, newPrice: link.price });
       postgres.updateItemPrice(item.a, link.price);
     }
 
-    winston.info('Adding additional item properties', { itemId: item.a });
     gameData.addAdditionalItemProperties(item);
 
-    winston.info('Removing null values from item', { itemId: item.a });
     item = utils.removeNullValues(item);
 
-    winston.info('Setting response for item', { itemId: item.a });
     job.setResponse(item.a, item);
   }
 
