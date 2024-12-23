@@ -83,24 +83,45 @@ CONFIG.allowed_origins = CONFIG.allowed_origins || [];
 const allowedRegexOrigins = CONFIG.allowed_regex_origins.map(origin => new RegExp(origin));
 
 async function handleJob(job) {
+  const startTime = performance.now(); // Start measuring time for handleJob execution
+  winston.info('Job processing started', { jobId: job.id });
+
   // See which items have already been cached
+  const itemStartTime = performance.now(); // Start measuring time for item data retrieval
+  winston.info('Retrieving item data from PostgreSQL', { jobId: job.id });
+
   const itemData = await postgres.getItemData(job.getRemainingLinks().map(e => e.link));
+  const itemEndTime = performance.now(); // End measuring time for item data retrieval
+  winston.info('Item data retrieved', {
+    jobId: job.id,
+    duration: `${(itemEndTime - itemStartTime).toFixed(2)}ms`,
+  });
 
   for (let item of itemData) {
     const link = job.getLink(item.a);
 
     if (!item.price && link.price) {
+      winston.info('Updating item price', { itemId: item.a, newPrice: link.price });
       postgres.updateItemPrice(item.a, link.price);
     }
 
+    winston.info('Adding additional item properties', { itemId: item.a });
     gameData.addAdditionalItemProperties(item);
 
+    winston.info('Removing null values from item', { itemId: item.a });
     item = utils.removeNullValues(item);
 
+    winston.info('Setting response for item', { itemId: item.a });
     job.setResponse(item.a, item);
   }
 
   if (job.remainingSize() <= 0) {
+    winston.info('No remaining items to process, exiting', { jobId: job.id });
+    const endTime = performance.now(); // End measuring time for handleJob execution
+    winston.info('Job processing completed', {
+      jobId: job.id,
+      duration: `${(endTime - startTime).toFixed(2)}ms`,
+    });
     return;
   }
 
@@ -127,6 +148,11 @@ async function handleJob(job) {
   if (job.remainingSize() > 0) {
     queue.addJob(job, CONFIG.bot_settings.max_attempts);
   }
+  const endTime = performance.now(); // End measuring time for handleJob execution
+    winston.info('Job processing completed', {
+      jobId: job.id,
+      duration: `${(endTime - startTime).toFixed(2)}ms`,
+    });
 }
 
 function canSubmitPrice(key, link, price) {
@@ -189,6 +215,9 @@ app.get("/api/inspect", async (req, res) => {
 });
 
 app.post("/api/inspect/bulk", async (req, res) => {
+  const startTime = Date.now();
+  winston.info("Request started");
+
   if (!req.body || (CONFIG.bulk_key && req.body.bulk_key !== CONFIG.bulk_key)) {
     return errors.BadSecret.respond(res);
   }
@@ -224,8 +253,10 @@ app.post("/api/inspect/bulk", async (req, res) => {
 
   try {
     await handleJob(job);
+    winston.info(`Request handling time: ${Date.now() - startTime}ms`)
   } catch (e) {
     winston.warn(e);
+    logger.info(`Request handling time: ${Date.now() - startTime}ms`);
     errors.GenericBad.respond(res);
   }
 });
